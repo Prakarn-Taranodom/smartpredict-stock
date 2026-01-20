@@ -30,11 +30,9 @@ def get_stock_industry(ticker):
         return 'Unknown'
 
 def prepare_stock_data_for_clustering(stocks, window_days=60, include_industry=False, add_suffix=None):
-    """
-    Prepare stock data for clustering by computing conditional volatility time series.
-    """
     cv_series_list = []
     total = len(stocks)
+    failed_stocks = []
     
     for idx, stock in enumerate(stocks, 1):
         try:
@@ -44,6 +42,7 @@ def prepare_stock_data_for_clustering(stocks, window_days=60, include_industry=F
             df = fetch_stock_data(ticker)
             if df is None or len(df) < window_days:
                 print(f"Skipping {ticker}: insufficient data")
+                failed_stocks.append(ticker)
                 continue
 
             df_cv = compute_conditional_volatility(df)
@@ -60,11 +59,16 @@ def prepare_stock_data_for_clustering(stocks, window_days=60, include_industry=F
             cv_series_list.append(row_data)
 
         except Exception as e:
-            print(f"Error processing {stock}: {e}")
+            print(f"Skipping {stock}: {str(e)}")
+            failed_stocks.append(stock)
             continue
 
     if not cv_series_list:
-        raise ValueError("No valid stocks found for clustering")
+        raise ValueError(f"No valid stocks found. Failed: {', '.join(failed_stocks[:10])}")
+    
+    print(f"\nSuccessfully processed {len(cv_series_list)}/{total} stocks")
+    if failed_stocks:
+        print(f"Failed stocks: {', '.join(failed_stocks[:10])}{'...' if len(failed_stocks) > 10 else ''}")
 
     cv_df = pd.DataFrame(cv_series_list)
     cv_df = cv_df.fillna(0)
