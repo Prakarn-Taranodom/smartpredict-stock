@@ -54,18 +54,21 @@ def compute_cv_from_residuals(residuals):
 
 def compute_conditional_volatility(price_df):
     df = price_df.copy()
+    
+    if len(df) < 30:
+        raise ValueError(f"Not enough data: need at least 30 days, got {len(df)}")
 
-    # แก้ไข: บังคับให้เป็น Series
     close_prices = df["Close"].squeeze()
     df["log_return"] = np.log(close_prices / close_prices.shift(1))
     df = df.dropna()
+    
+    if len(df) < 20:
+        raise ValueError(f"Not enough data after dropna: {len(df)} observations")
 
     resid = fit_auto_arima(df["log_return"])
     cv = compute_cv_from_residuals(resid)
 
     df["cv"] = cv
-
-    # ✅ เพิ่ม RSI ตรงนี้ (สำคัญมาก)
     df = add_technical_features(df)
 
     return df
