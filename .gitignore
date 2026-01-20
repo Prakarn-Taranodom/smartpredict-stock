@@ -10,3 +10,6 @@ ENV/
 *.log
 .DS_Store
 .env
+*.pyc
+.git/
+test_*.py
