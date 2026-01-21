@@ -311,24 +311,24 @@
                         </div>
                         <div class="stat-item">
                             <strong>Current Price:</strong> 
-                            {% if result.crypto_stats.current_price != 'N/A' %}
-                                <span style="color: #27ae60; font-weight: bold;">${{ "{:,.2f}".format(result.crypto_stats.current_price) }}</span>
+                            {% if result.crypto_stats.current_price and result.crypto_stats.current_price != 'N/A' %}
+                                <span style="color: #27ae60; font-weight: bold;">${{ "{:,.2f}".format(result.crypto_stats.current_price|float) }}</span>
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>24h High:</strong> 
-                            {% if result.crypto_stats.day_high != 'N/A' %}
-                                ${{ "{:,.2f}".format(result.crypto_stats.day_high) }}
+                            {% if result.crypto_stats.day_high and result.crypto_stats.day_high != 'N/A' %}
+                                ${{ "{:,.2f}".format(result.crypto_stats.day_high|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>24h Low:</strong> 
-                            {% if result.crypto_stats.day_low != 'N/A' %}
-                                ${{ "{:,.2f}".format(result.crypto_stats.day_low) }}
+                            {% if result.crypto_stats.day_low and result.crypto_stats.day_low != 'N/A' %}
+                                ${{ "{:,.2f}".format(result.crypto_stats.day_low|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
@@ -339,40 +339,40 @@
                         <h5>💎 Market Data</h5>
                         <div class="stat-item">
                             <strong>Market Cap:</strong>
-                            {% if result.crypto_stats.market_cap != 'N/A' %}
-                                ${{ "{:,.0f}".format(result.crypto_stats.market_cap) }}
+                            {% if result.crypto_stats.market_cap and result.crypto_stats.market_cap != 'N/A' %}
+                                ${{ "{:,.0f}".format(result.crypto_stats.market_cap|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>24h Volume:</strong>
-                            {% if result.crypto_stats.volume_24h != 'N/A' %}
-                                ${{ "{:,.0f}".format(result.crypto_stats.volume_24h) }}
+                            {% if result.crypto_stats.volume_24h and result.crypto_stats.volume_24h != 'N/A' %}
+                                ${{ "{:,.0f}".format(result.crypto_stats.volume_24h|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>Circulating Supply:</strong>
-                            {% if result.crypto_stats.circulating_supply != 'N/A' %}
-                                {{ "{:,.0f}".format(result.crypto_stats.circulating_supply) }}
+                            {% if result.crypto_stats.circulating_supply and result.crypto_stats.circulating_supply != 'N/A' %}
+                                {{ "{:,.0f}".format(result.crypto_stats.circulating_supply|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>Total Supply:</strong>
-                            {% if result.crypto_stats.total_supply != 'N/A' %}
-                                {{ "{:,.0f}".format(result.crypto_stats.total_supply) }}
+                            {% if result.crypto_stats.total_supply and result.crypto_stats.total_supply != 'N/A' %}
+                                {{ "{:,.0f}".format(result.crypto_stats.total_supply|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>Max Supply:</strong>
-                            {% if result.crypto_stats.max_supply != 'N/A' %}
-                                {{ "{:,.0f}".format(result.crypto_stats.max_supply) }}
+                            {% if result.crypto_stats.max_supply and result.crypto_stats.max_supply != 'N/A' %}
+                                {{ "{:,.0f}".format(result.crypto_stats.max_supply|float) }}
                             {% else %}
                                 ∞ (Unlimited)
                             {% endif %}
@@ -383,32 +383,32 @@
                         <h5>📈 Price Range</h5>
                         <div class="stat-item">
                             <strong>52W High:</strong>
-                            {% if result.crypto_stats.week_52_high != 'N/A' %}
-                                ${{ "{:,.2f}".format(result.crypto_stats.week_52_high) }}
+                            {% if result.crypto_stats.week_52_high and result.crypto_stats.week_52_high != 'N/A' %}
+                                ${{ "{:,.2f}".format(result.crypto_stats.week_52_high|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>52W Low:</strong>
-                            {% if result.crypto_stats.week_52_low != 'N/A' %}
-                                ${{ "{:,.2f}".format(result.crypto_stats.week_52_low) }}
+                            {% if result.crypto_stats.week_52_low and result.crypto_stats.week_52_low != 'N/A' %}
+                                ${{ "{:,.2f}".format(result.crypto_stats.week_52_low|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>ATH (All-Time High):</strong>
-                            {% if result.crypto_stats.ath != 'N/A' %}
-                                ${{ "{:,.2f}".format(result.crypto_stats.ath) }}
+                            {% if result.crypto_stats.ath and result.crypto_stats.ath != 'N/A' %}
+                                ${{ "{:,.2f}".format(result.crypto_stats.ath|float) }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </div>
                         <div class="stat-item">
                             <strong>ATL (All-Time Low):</strong>
-                            {% if result.crypto_stats.atl != 'N/A' %}
-                                ${{ "{:,.2f}".format(result.crypto_stats.atl) }}
+                            {% if result.crypto_stats.atl and result.crypto_stats.atl != 'N/A' %}
+                                ${{ "{:,.2f}".format(result.crypto_stats.atl|float) }}
                             {% else %}
                                 N/A
                             {% endif %}

@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import requests
 from datetime import datetime, timedelta
 import time
@@ -54,20 +55,18 @@ def fetch_crypto_data(symbol, period="5y"):
         days = days_map.get(period, 1825)
         
         # Generate synthetic historical data based on current price
-        # (CoinLore doesn't provide historical OHLCV, so we simulate it)
         dates = pd.date_range(end=datetime.now(), periods=days, freq='D')
         
         # Create realistic price movement
-        np_random = pd.np if hasattr(pd, 'np') else __import__('numpy')
-        returns = np_random.random.normal(0, 0.02, days)
-        prices = current_price * (1 + returns).cumprod()
+        returns = np.random.normal(0, 0.02, days)
+        prices = current_price * np.cumprod(1 + returns)
         
         df = pd.DataFrame({
             'Close': prices,
-            'Open': prices * (1 + np_random.random.normal(0, 0.005, days)),
-            'High': prices * (1 + abs(np_random.random.normal(0, 0.01, days))),
-            'Low': prices * (1 - abs(np_random.random.normal(0, 0.01, days))),
-            'Volume': abs(np_random.random.normal(1000000, 500000, days))
+            'Open': prices * (1 + np.random.normal(0, 0.005, days)),
+            'High': prices * (1 + np.abs(np.random.normal(0, 0.01, days))),
+            'Low': prices * (1 - np.abs(np.random.normal(0, 0.01, days))),
+            'Volume': np.abs(np.random.normal(1000000, 500000, days))
         }, index=dates)
         
         df = df[['Open', 'High', 'Low', 'Close', 'Volume']]
