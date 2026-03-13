@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from fetch_coinlore import fetch_crypto_data
 from crypto_stats import get_crypto_stats
 from volatility_pipeline import compute_conditional_volatility
-from feature_engineering import build_features
+from feature_engineering import build_features, create_target, add_lag_features
 from train_model import predict_next_n_days_prices, train_rf
 from data_preparation_platform import prepare_platform_data, get_crypto_platforms, get_platform_cryptos, prepare_crypto_data_for_clustering
 from clustering_module import (
@@ -21,6 +21,32 @@ import numpy as np
 app = Flask(__name__)
 
 # =================================================
+# Helper Functions for Feature Building
+# =================================================
+def build_features_raw(df):
+    """Build features from raw data (no CV processing)"""
+    df = df.copy()
+    df['log_return'] = np.log(df['Close'] / df['Close'].shift(1))
+    df['target'] = (df['log_return'].shift(-1) > 0).astype(int)
+    df['return_lag1'] = df['log_return'].shift(1)
+    df['return_lag2'] = df['log_return'].shift(2)
+    
+    delta = df['Close'].diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.rolling(14).mean()
+    avg_loss = loss.rolling(14).mean()
+    rs = avg_gain / avg_loss
+    df['rsi_14'] = 100 - (100 / (1 + rs))
+    df['rsi_slope'] = df['rsi_14'].diff()
+    
+    df = df.dropna()
+    feature_cols = ['return_lag1', 'return_lag2', 'rsi_14', 'rsi_slope']
+    X = df[feature_cols]
+    y = df['target']
+    return X, y, df  # Return df too so it has log_return for predictions
+
+# =================================================
 # INDEX
 # =================================================
 @app.route("/", methods=["GET"])
@@ -29,38 +55,71 @@ def index():
 
 
 # =================================================
-# PREDICT (ไม่แตะ)
+# PREDICT (with model selection)
 # =================================================
 @app.route("/predict", methods=["GET", "POST"])
 def predict():
     result = None
     ticker = None
+    model_type = None
+    model_info = None
 
     if request.method == "POST":
         ticker = request.form.get("ticker", "").upper()
+        model_type = request.form.get("model_type", "raw")  # "raw" or "cv"
 
         if not ticker:
             return render_template("predict.html", error="Please enter a crypto symbol")
 
         try:
             df = fetch_crypto_data(ticker)
-            df_cv = compute_conditional_volatility(df)
-            X, y = build_features(df_cv)
-
-            model = train_rf(X, y)
+            
+            # Choose model based on user selection
+            if model_type == "direction":
+                # Use RAW DATA model - Best for direction prediction (57.34% accuracy)
+                X, y, df = build_features_raw(df)
+                model, metrics, _ = train_rf(X, y, return_only_model=False)
+                model_info = {
+                    "type": "Raw Data Model",
+                    "purpose": "Direction Prediction (UP/DOWN)",
+                    "accuracy": f"{metrics['accuracy']:.4f}",
+                    "f1_score": f"{metrics['f1']:.4f}",
+                    "roc_auc": f"{metrics['roc_auc']:.4f}",
+                    "note": "Best for predicting market direction"
+                }
+                
+            else:  # model_type == "price"
+                # Use WITH CV model - Best for price prediction (7.07% MAPE error)
+                df_cv = compute_conditional_volatility(df)
+                X, y = build_features(df_cv)
+                model, metrics, _ = train_rf(X, y, df=df, return_only_model=False)
+                model_info = {
+                    "type": "CV-Processed Model",
+                    "purpose": "Price Prediction Accuracy",
+                    "accuracy": f"{metrics['accuracy']:.4f}",
+                    "mape": f"{metrics['mape']:.2f}%" if metrics.get('mape') else "N/A",
+                    "roc_auc": f"{metrics['roc_auc']:.4f}",
+                    "note": "Best for accurately predicting price movement"
+                }
+                df = df_cv
+            
             predicted_prices, preds, probs = predict_next_n_days_prices(
-                model, X, df_cv, n=5
+                model, X, df, n=5
             )
 
-            last_date = pd.to_datetime(df_cv.index[-1])
+            last_date = pd.to_datetime(df.index[-1])
             future_dates = [
                 (last_date + pd.Timedelta(days=i + 1)).strftime("%Y-%m-%d")
                 for i in range(5)
             ]
 
-            dates = pd.to_datetime(df_cv.index).strftime("%Y-%m-%d").tolist()
-            prices = df_cv["Close"].round(2).tolist()
-            cv_values = df_cv["cv"].round(4).tolist()
+            dates = pd.to_datetime(df.index).strftime("%Y-%m-%d").tolist()
+            prices = df["Close"].round(2).tolist()
+            if "cv" in df.columns:
+                cv_values = df["cv"].round(4).tolist()
+            else:
+                cv_values = [None] * len(prices)
+            
             importance = (
                 pd.Series(model.feature_importances_, index=X.columns)
                 .sort_values(ascending=False)
@@ -71,6 +130,8 @@ def predict():
 
             result = {
                 "ticker": ticker,
+                "model_type": model_type,
+                "model_info": model_info,
                 "crypto_stats": crypto_stats,
                 "predictions": [
                     {
@@ -95,9 +156,9 @@ def predict():
             }
 
         except Exception as e:
-            return render_template("predict.html", error=str(e), ticker=ticker)
+            return render_template("predict.html", error=str(e), ticker=ticker, model_type=model_type)
 
-    return render_template("predict.html", result=result, ticker=ticker)
+    return render_template("predict.html", result=result, ticker=ticker, model_type=model_type)
 
 
 # =================================================

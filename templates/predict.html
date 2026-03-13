@@ -243,10 +243,10 @@
 
         <!-- Prediction Form -->
         <div style="margin: 30px 0;">
-            <h3>Enter Crypto Symbol</h3>
+            <h3>Enter Crypto Symbol & Choose Prediction Model</h3>
             <form method="post" action="/predict">
                 <div style="margin-bottom: 15px;">
-                    <input type="text" name="ticker" placeholder="Enter crypto symbol (e.g., BTC, ETH, BNB)" required>
+                    <input type="text" name="ticker" placeholder="Enter crypto symbol (e.g., BTC, ETH, BNB)" required value="{{ ticker or '' }}">
                     <div style="font-size: 14px; color: #7f8c8d; text-align: center; margin-top: 10px;">
                         <strong>💰 Popular:</strong> BTC (Bitcoin), ETH (Ethereum), BNB (Binance), SOL (Solana)<br>
                         <strong>🔥 DeFi:</strong> UNI (Uniswap), AAVE, LINK (Chainlink)<br>
@@ -254,6 +254,26 @@
                         <small>Enter symbol without -USD suffix</small>
                     </div>
                 </div>
+                
+                <!-- Model Selection -->
+                <div style="margin-bottom: 20px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px; max-width: 400px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #2c3e50;">Select Prediction Model:</label>
+                        <select name="model_type" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #3498db; border-radius: 8px; cursor: pointer;">
+                            <option value="direction" {% if model_type == 'direction' %}selected{% endif %}>
+                                🎯 Direction Model (Best for UP/DOWN prediction - 57.34% accuracy)
+                            </option>
+                            <option value="price" {% if model_type == 'price' %}selected{% endif %}>
+                                💰 Price Model (Best for accurate price levels - 7.07% MAPE error)
+                            </option>
+                        </select>
+                        <div style="font-size: 12px; color: #7f8c8d; margin-top: 8px; text-align: left;">
+                            <strong>📊 Direction Model:</strong> Better at predicting market direction (UP/DOWN)<br>
+                            <strong>💵 Price Model:</strong> Better at predicting actual price movements
+                        </div>
+                    </div>
+                </div>
+                
                 <button type="submit">🔮 Predict Next 5 Days</button>
             </form>
         </div>
@@ -267,6 +287,14 @@
         {% if result %}
             <div class="success">
                 <strong>✅ Prediction Complete for {{ result.ticker }}</strong>
+                {% if result.model_info %}
+                <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 5px; font-size: 14px;">
+                    <strong>Model Used:</strong> {{ result.model_info.type }}<br>
+                    <strong>Purpose:</strong> {{ result.model_info.purpose }}<br>
+                    <strong>Accuracy:</strong> {{ result.model_info.accuracy }} | ROC-AUC: {{ result.model_info.roc_auc }}<br>
+                    <em>{{ result.model_info.note }}</em>
+                </div>
+                {% endif %}
             </div>
 
             <!-- PREDICTIONS TABLE -->
